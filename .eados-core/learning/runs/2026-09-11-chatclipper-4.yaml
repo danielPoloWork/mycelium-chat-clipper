@@ -1,0 +1,37 @@
+# Run record — appended by tools/record_run.py; a fact about a past run, never edited
+# after the fact. `phase` is the delivery phase that produced it (#215).
+slug: "chatclipper"
+date: "2026-09-11"
+phase: "scaffold"
+lang: "typescript"
+kind: "app"
+outcome: "ok"
+overrides:
+  - key: "identity.project_kind"
+    default: "library"
+    chosen: "app"
+  - key: "ownership.assignee"
+    default: "@me"
+    chosen: "danielPoloWork"
+  - key: "ownership.license_id"
+    default: "MIT"
+    chosen: "Apache-2.0"
+  - key: "spec.pattern_discipline"
+    default: "advisory"
+    chosen: "enforced"
+  - key: "spec.provenance"
+    default: "coauthor"
+    chosen: "import"
+lessons_applied: ["L-0002", "L-0010"]
+failures: []
+rubric:
+  spec_measurability: 2
+  spec_ci_traceability: 2
+  architecture_rationale: 2
+  profile_fidelity: 1
+  pattern_fit: 2
+  test_strategy: 2
+  docs_coherence: 1
+  governance_fit: 2
+  capability_hygiene: 2
+  security_posture: 2

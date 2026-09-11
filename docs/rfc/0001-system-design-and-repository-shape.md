@@ -174,7 +174,7 @@ Rules that make this concrete and checkable:
 - **Version lockstep.** The version file is `src/mycelium/core/src/version.ts`; every package's
   `package.json` version is asserted equal to it by a workspace script, and the provenance fields
   `core_version` / `extension_version` (PRD §6.3) read their own package's version. The generated
-  `consistency_lint`'s `CONFIG["version_file"]` points at the derived root (`{{SRC_MAIN}}/version.ts`)
+  `consistency_lint`'s `CONFIG["version_file"]` points at the derived root (the template's SRC_MAIN placeholder joined with `version.ts`)
   and, finding no file there, falls back to the README badge (`certain`, from the template's
   `check_version_lockstep`); WP-00 re-points that configuration to `src/mycelium/core/src/version.ts`
   as part of superseding ADR-0002, so the lockstep check stays real.
