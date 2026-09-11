@@ -7,7 +7,7 @@ Three artifacts, three jobs — keep them distinct:
 |---|---|---|
 | `SECURITY.md` (repo root) | the **policy** — supported versions, private reporting channel | root |
 | [`threat-model.md`](threat-model.md) | the **analysis** — trust boundaries + the STRIDE pass | here |
-| the audit **risk register** | the **outcome** — scored findings of a concrete audit run | audit records |
+| [`risk-register.md`](risk-register.md) — the audit **risk register** | the **outcome** — scored findings of a concrete audit run (one section per audit) | here + the phase run record under `.eados-core/learning/runs/` |
 
 The threat model is scaffolded empty and **filled by the audit phase's threat-modeling sub-mode**
 (`/eados security`, an alias into `/eados audit` — ADR-0019 §2: a sub-mode adds no new phase or
