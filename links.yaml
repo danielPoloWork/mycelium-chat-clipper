@@ -1,5 +1,9 @@
 # Auto-derived by tools/derive_links.py from merged PRs — do not hand-edit.
 links:
+  - pr: 6
+    rfc: "RFC-0001"
+    milestone: "M1 — Project bootstrap & CI"
+    commit: "4522e9ed0ecc5bb18689205f422f90733073749a"
   - pr: 4
     rfc: "RFC-0001"
     milestone: "M1 — Project bootstrap & CI"
