@@ -1,0 +1,12 @@
+# IDE / editor
+/.idea/
+/.vscode/
+*.swp
+.DS_Store
+
+# Python tool caches (the vendored EADOS tooling under .eados-core/tools/)
+__pycache__/
+*.pyc
+
+# Local agent / harness scratch (never commit)
+.claude/settings.local.json
