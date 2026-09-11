@@ -1,12 +1,57 @@
+# Build outputs
+/build/
+/dist/
+/out/
+/target/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+
+# Dependency / package manager caches
+/node_modules/
+/.venv/
+/venv/
+__pycache__/
+*.pyc
+/.gradle/
+/vendor/
+/.cargo/
+
+# Coverage & test artifacts
+/coverage/
+*.gcda
+*.gcno
+*.profraw
+.coverage
+htmlcov/
+
 # IDE / editor
 /.idea/
 /.vscode/
 *.swp
 .DS_Store
 
-# Python tool caches (the vendored EADOS tooling under .eados-core/tools/)
-__pycache__/
-*.pyc
+# Tool caches
+/.mypy_cache/
+/.ruff_cache/
+/.pytest_cache/
+
+# Generated docs
+/docs/_site/
+/docs/doxygen/html/
 
 # Local agent / harness scratch (never commit)
+.questions
+.bugs
 .claude/settings.local.json
+
+# Vendored EADOS factory and the Claude Code command adapters — TRACKED in this repository by the
+# owner's decision (bootstrap PR #1): the slash-command pointers must resolve on every clone and the
+# factory version in use must be reviewable. The factory's generated default excluded both
+# (`/.eados-core/*` except `learning/runs/`, and the per-host adapter trees); those lines were
+# removed at scaffold. Python caches inside the factory stay ignored via `__pycache__/` above.
