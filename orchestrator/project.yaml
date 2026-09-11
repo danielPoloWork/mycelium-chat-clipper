@@ -19,9 +19,21 @@
 #   - D3 ADR numbering: sequential at authoring time from ADR-0003; the spec's table is mapped, not copied;
 #   - D4 documents: the Italian PRD imported verbatim to docs/prd/SPEC-LCA-001.md; the draft golden rules
 #     become governance.house_rules (written by the architect during plan, before scaffold).
+#
+# Plan phase (2026-09-11): the roadmap below was NEGOTIATED per os/plan/negotiation-protocol.md —
+# priorities = the PRD's risk-first WP order (product-manager: the PO's document), T-shirt sizes and
+# route signals per item (tech-lead), milestones reconciled for one maintainer + agent, no calendar
+# dates (producer); RFC-0001's roadmap amendments (1.6, 1.10, 1.12, new 1.13, 2.1, ADR placement at
+# M2/M4, 3.5) are applied; governance.house_rules written (RFC-0001 D4). ROADMAP.md is RENDERED from
+# this file (render_artifact.py ROADMAP.md.tmpl) so the scaffold reproduces it byte-identically.
+# Release cadence — OWNER'S DECISION (2026-09-11, plan negotiation): +0.1 minor per completed milestone
+# from v0.1.0 at M1 (M2 -> v0.2.0 ... M11 -> v0.11.0); v1.0.0 only after ALL milestones and open issues
+# are fixed (M12). This supersedes the PRD §15 release plan (v0.1.0 after WP-04, v1.0.0 after WP-08) —
+# added to the PRD Rev 3.1 request. M12 as the home of the v1.0.0 release is the producer's reading of
+# "after all milestone and issue fixes then we release v1.0.0" (likely; cheap to cut on the PR).
 
 schema_version: 1
-manifest_rev: 3
+manifest_rev: 6
 domain: software             # Q0.4 — confirmed; loads .eados-core/orchestrator/domains/software.yaml
 
 # Agent runtime: Claude Code, detected from the CLAUDECODE / CLAUDE_CODE_ENTRYPOINT environment
@@ -30,11 +42,12 @@ domain: software             # Q0.4 — confirmed; loads .eados-core/orchestrato
 # KNOWN_SECTIONS rejects it at --check (factory gap, to be reported upstream) — detection suffices.
 
 delivery_state:
-  phase: plan                # init|design|plan|scaffold|audit|migrate
+  phase: scaffold            # init|design|plan|scaffold|audit|migrate
   checkpoints:               # transition ledger — a human-gated move records confirmed_by + gate_results
     - { from: init, to: design, gates: ['manifest-valid'], at: 2026-09-11, confirmed_by: danielPoloWork, gate_results: { manifest-valid: OK } }
     - { from: design, to: plan, gates: ['rfc-approved'], at: 2026-09-11, confirmed_by: danielPoloWork, gate_results: { rfc-approved: OK } }
-  refs: { rfcs: [RFC-0001], milestones: [], prs: [], releases: [] }   # RFC-0001 recorded 2026-09-11 (state writer: enterprise-architect)
+    - { from: plan, to: scaffold, gates: ['roadmap-covers-rfcs'], at: 2026-09-11, confirmed_by: danielPoloWork, gate_results: { roadmap-covers-rfcs: OK } }
+  refs: { rfcs: [RFC-0001], milestones: [M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12], prs: [], releases: [] }   # RFC-0001 (design) and the roadmap milestone ids (plan) recorded 2026-09-11 (state writer: enterprise-architect)
 
 identity:
   project_name:    "mycelium-chat-clipper"     # Q0.3 — the GitHub repository name (git remote danielPoloWork/mycelium-chat-clipper)
@@ -74,16 +87,16 @@ toolchain:                   # Q3.x — profile defaults overridden where spec �
   sanitizers:      "tsc --strict (type soundness); eslint --max-warnings 0; no-network-check (static scan of the production bundle, content script included); size-limit (content script <= 300 kB); pnpm audit; CodeQL"
   coverage_tool:   "Vitest coverage (v8) — per-package thresholds: core >= 90% (canon, hash, slug, path, sanitizeUrl at 100%), adapters >= 80%"
   coverage_target: 80                          # Q3.2 — the repository floor; the per-package thresholds above are NFR-010
-  doc_tool:        ""                          # Q3.5 — ASSUMED from the profile (TypeDoc); the spec mandates JSDoc on public API but names no generator
-  version_file:    ""                          # profile (version.ts mirroring package.json)
-  version_const_hint: ""                       # profile
-  package_ecosystem: ""                        # profile (npm)
+  doc_tool:        "TypeDoc"                   # Q3.5 — ASSUMED from the profile (materialized in plan, 2026-09-11); the spec mandates JSDoc on public API but names no generator
+  version_file:    "version.ts"                # profile default, materialized in plan; under RFC-0001 D2 the real file is src/mycelium/core/src/version.ts and WP-00 re-points the generated lint (1.10)
+  version_const_hint: "export const VERSION = 'X.Y.Z'"   # profile default, materialized in plan
+  package_ecosystem: "npm"                     # profile default, materialized in plan (Dependabot ecosystem)
   commands:
     build:        "pnpm build"
     test:         "pnpm test:unit && pnpm test:contract"
     format_check: "pnpm prettier --check ."
     lint:         "pnpm eslint . --max-warnings 0 && pnpm tsc --noEmit"
-    bench:        ""                           # Q3.6 — ASSUMED from the profile (pnpm vitest bench); the spec's 1,000-message perf fixture names no script
+    bench:        "pnpm vitest bench"          # Q3.6 — ASSUMED from the profile (materialized in plan); the spec's 1,000-message perf fixture names no script
 
 ci:                          # Profile defaults REFRESHED (confirmed by the owner 2026-09-11): Node 18 and 20 are end-of-life in 2026; Windows kept for CON-006 path rules; macOS dropped (no macOS-specific behavior)
   tier1_platforms: "Linux and Windows on Node 22 and 24 LTS; Chromium (Chrome/Edge) >= 120 for the extension"
@@ -119,9 +132,75 @@ ci:                          # Profile defaults REFRESHED (confirmed by the owne
 governance:
   posture: standard                            # Q0.5 — ASSUMED default (ADR-0015): single maintainer, internal, unregulated; spec §11 already mandates ADRs for security-relevant changes
   scopes: [core, adapters, extension, tools, contract, e2e, fixtures, build, tests, docs, ci, release]   # Q4.3 — derived from spec §14.1 packages + the standard four; provider sub-scopes (adapters/chatgpt) are a design-RFC decision
-  version_start: "pre-1.0 milestone-driven"    # Q4.4 — spec §15: v0.1.0 after WP-04, v1.0.0 after WP-08
+  version_start: "pre-1.0 milestone-driven — a +0.1 minor bump per completed milestone from v0.1.0 at M1 (M2 -> v0.2.0, ... M11 -> v0.11.0); v1.0.0 only after every milestone and open issue is fixed (M12)"   # Q4.4 — the OWNER'S release cadence (2026-09-11), superseding the PRD §15 plan (v0.1.0 after WP-04, v1.0.0 after WP-08); Rev 3.1 request
   start_version: "0.0.0"                       # Q4.4 — ASSUMED default seed; the first release is v0.1.0
-  house_rules: ""                              # config/house-rules.md is empty
+  house_rules: |                               # RFC-0001 D4 — the PO's golden rules, rewritten to the D1/D2/D4 names and stripped of the layout/commands/precedence sections (owned elsewhere); rendered as the generated AGENTS.md §15
+    ### Mycelium Chat Clipper — project non-negotiables
+
+    Source: the Product Owner's operating instructions that accompanied PRD Rev 3.0, recorded here per
+    RFC-0001 D4. The product is an **exporter, not an archive** (PRD ADR-021): the extension does not keep
+    the archive, reconcile captures, index, chunk, search, or produce Markdown files — those live in the
+    ingestion module (PRD Appendix D). Implementing any of them re-introduces the scope removed in Rev 3.0:
+    stop.
+
+    1. **No network, permanently.** Never add `fetch`, `XMLHttpRequest`, `WebSocket`, `sendBeacon`, or
+       `EventSource` — content script included. A feature that needs network is out of scope until an ADR
+       rewrites PRD §11. Refuse and say why.
+    2. **No private provider endpoints.** DOM extraction only. Never inject into the page MAIN world.
+    3. **The domain is pure.** The `core` package never imports `chrome`, `browser`, `window`, `document`,
+       or WXT. DOM parsing goes through the `HtmlParser` port (browser: `DOMParser`; Node: `linkedom`).
+       `@mycelium-labs/chatclipper-core` must run in Node — the ingestion module may reuse it.
+    4. **Browser APIs live only in** the extension package's `infrastructure/**` and `entrypoints/**`
+       (`eslint-plugin-boundaries`, PRD §5.1). Never disable a lint rule to get around it.
+    5. **The extension is stateless with respect to the archive.** IndexedDB holds only settings, the FSA
+       handle, a UX cache (`exports`) and `pending_bundles` for retry. The cache never decides what to
+       export. Losing it must be harmless.
+    6. **The export contract (PRD §6) is the product.** Any change to fields, file names, folder layout, or
+       completion semantics requires an ADR, a `schema_version` bump, regenerated JSON Schema, an updated
+       `docs/CONTRACT.md`, and a green `validate-bundle`. Within a major: additive only (new
+       nullable/optional fields, documented enum values).
+    7. **Bundles are write-once.** Never overwrite (except a byte-identical retry), never delete, never read
+       under `inbox/`. `manifest.json` is written **last**; its presence means "complete". Never write it
+       if an earlier file failed or (FSA) failed read-back verification.
+    8. **Never log message content or titles.** Only ids, counts, hashes, error codes (`LogSafeValue`).
+    9. **Never fabricate data.** Missing timestamp / model / id → `null` plus a coded warning. Relative
+       times are not timestamps.
+    10. **Never invent DOM selectors.** Develop adapters against `fixtures/`. Missing fixture → use the PRD
+        Appendix C hints, tag the tests `@fixture-pending`, add an entry to `docs/TODO-HUMAN.md`.
+    11. **Validate at trust boundaries with Zod:** every Port message, every settings read, every file the
+        extension reads (`export-root.json`, and in Phase 2 `state/*.anchor.json`, size-capped and treated
+        as hostile).
+    12. **Errors are values.** `Result<T, DomainError>` in domain and application code; `throw` only for
+        invariant bugs and at browser boundaries.
+    13. **Patterns: exactly the eight mandatory ones of PRD §5.7**, each with an `@pattern <Name> —
+        <problem>` JSDoc tag. Do not introduce Visitor, Command Bus, Event Bus, Mediator, extra Facades,
+        Decorator hierarchies, Builders for schema objects, Specification objects, Memento classes, Template
+        Method inheritance, or single-implementation Strategy hierarchies without an ADR. Content blocks are
+        data: use an exhaustive `switch`.
+    14. **No new dependencies** outside PRD §14.4 (plus axe-core, approved by the PO on 2026-09-11) without
+        asking the Product Owner. `dompurify` is not needed (nothing renders HTML).
+
+    **Things that look reasonable but are wrong here:** building an archive index, a reconciliation step, a
+    Markdown file writer, or a "sync" button; deciding what to export from the local cache; writing
+    `manifest.json` before the other files are complete (and, with FSA, verified); overwriting or reading
+    anything under `inbox/`; extracting or expanding once after scrolling to the top (expand inside every
+    scroll window, before collecting it); hashing timestamps, models or ids into `content_sha256`; storing
+    a signed media URL anywhere in the bundle; rendering RAW `outer_html` in the extension UI; using
+    provider CSS utility classes as essential selectors; adding a bus, a Visitor, or a Facade "for
+    structure".
+
+    **Stop and ask the Product Owner when:** the PRD is silent or contradictory on the export contract,
+    folder layout, permissions, or completion semantics; a capability appears impossible in MV3 (write the
+    findings in `docs/spikes/` first); a dependency outside PRD §14.4 seems necessary; any change to
+    `permissions`, `host_permissions`, or the CSP is proposed (it also requires an ADR); a test can only
+    pass by weakening a gate (coverage, lint, CSP, invariants, contract).
+
+    **Documents and precedence (RFC-0001 D4).** `docs/prd/SPEC-LCA-001.md` is the Product Owner's PRD,
+    imported verbatim in Italian — the one recorded exception to English-on-disk; it is a source, not an
+    i18n translation, and the freshness lint does not track it. On product requirements the PRD prevails;
+    on the RFC-0001 D1–D4 surfaces the repository's ADRs prevail until PRD Rev 3.1 aligns; a PRD-vs-spec
+    conflict is a manifest defect first and is fixed PRD → manifest → `docs/specs/` in the same PR, never
+    silently; an irreconcilable conflict stops the work and asks the Product Owner.
   capabilities:
     bench:      true                           # Q3.6 — spec §13.2: synthetic 1,000-message fixture measuring NFR-001/002/003/017
     threading:  false                          # Q2.2 — single-threaded event loop; Promises + AbortSignal; no workers
@@ -409,117 +488,178 @@ spec:
     traced in tests; `pnpm check` and CI green; documentation updated (ARCHITECTURE, ADRs,
     CHANGELOG, CONTRACT when §6 is touched); no `TODO` without a reference; extension loadable;
     manual smoke where indicated.
-  milestone1_items:                            # Q5.7 — WP-00 Bootstrap beyond the universal 1.1-1.5 (AC: pnpm install && pnpm check && pnpm build green; empty Side Panel opens; CI green)
-    - "1.6 pnpm workspace with the four packages (core, adapters, extension, tools) and the shared strict tsconfig (noUncheckedIndexedAccess, exactOptionalPropertyTypes, noImplicitOverride, verbatimModuleSyntax, ES2022 ESM)"
-    - "1.7 ESLint with typescript-eslint (type-aware) and eslint-plugin-boundaries enforcing the spec §5.1 dependency matrix; Prettier; commitlint for Conventional Commits"
-    - "1.8 Vitest + coverage-v8 wired per package with the NFR-010 thresholds; Playwright scaffold with --load-extension; the `pnpm check` aggregate script"
-    - text: "1.9 WXT extension skeleton: MV3 manifest per spec §11.2 (minimal permissions, three host permissions, CSP connect-src 'none', ISOLATED world), empty Side Panel, Options page, lifecycle-only service worker, `_locales/{en,it}` base"
+  # Roadmap — NEGOTIATED in the plan phase (2026-09-11) per os/plan/negotiation-protocol.md.
+  # Every item: "<n>.<m> <task> (RFC-0001) — size: <XS|S|M|L|XL>" + routing signals -> the renderer appends
+  # "— route: <tier> / <effort> (<signals>)" (tiers, never model names). Sizes are the tech-lead's
+  # macroscopic estimate (likely); routes: severity:medium -> standard/medium, severity:high -> standard/high,
+  # security | adr | decision-heavy -> frontier-reasoning/extra, sets-pattern -> frontier-reasoning/high;
+  # an item with no signal takes the floor (fast/low) — small, mechanical, or human-run steps.
+  milestone1_items:                            # WP-00 Bootstrap beyond the universal 1.1-1.5 (AC: pnpm install && pnpm check && pnpm build green; empty Side Panel opens; CI green). NOTE: 1.1/1.2 render the factory's derived tree; 1.6 moves the skeleton to src/mycelium/ (RFC-0001 D2)
+    - text: "1.6 Lay down the pnpm workspace at `src/mycelium/{core,adapters,extension,tools}` (RFC-0001 D2): `pnpm-workspace.yaml` glob `src/mycelium/*`, one `package.json` + `tsconfig.json` per package, the shared strict `tsconfig.base.json` (noUncheckedIndexedAccess, exactOptionalPropertyTypes, noImplicitOverride, verbatimModuleSyntax, ES2022 ESM); move the 1.1/1.2 skeleton out of the derived `src/main` / `src/test` tree and remove that tree; add the unanchored ignore patterns node_modules/, .output/, .wxt/, coverage/, test-results/, playwright-report/ — size: L"
+      signals: ["severity:high"]
+    - text: "1.7 ESLint with typescript-eslint (type-aware) and eslint-plugin-boundaries enforcing the PRD §5.1 dependency matrix; Prettier; commitlint for Conventional Commits (RFC-0001) — size: M"
+      signals: ["severity:medium"]
+    - text: "1.8 Vitest `vitest.config.ts` with `test.projects` = the four packages and the NFR-010 coverage thresholds; Playwright scaffold with --load-extension and `testDir: e2e/`; the `pnpm check` aggregate script (RFC-0001) — size: M"
+      signals: ["severity:medium"]
+    - text: "1.9 WXT extension skeleton: MV3 manifest per PRD §11.2 (minimal permissions, three host permissions, CSP connect-src 'none', ISOLATED world), empty Side Panel, Options page, lifecycle-only service worker, `_locales/{en,it}` base with the display name Mycelium Chat Clipper (RFC-0001) — size: M"
       signals: [security]
-    - text: "1.10 Day-zero ADRs (numbered at authoring time): MV3 Chromium-first; TypeScript/WXT/pnpm/Preact; Ports & Adapters with lint-enforced boundaries; Zod as the single schema definition with generated JSON Schema; the eight mandatory patterns; exporter-not-archiver perimeter; write-once bundle with final manifest; archive-stateless extension"
+    - text: "1.10 Day-zero ADRs, numbered at authoring time from ADR-0003 (RFC-0001 D3): spec 001 MV3 Chromium-first; 002 TypeScript/WXT/pnpm; 003 Ports & Adapters with lint-enforced boundaries; 004 Zod single definition with generated JSON Schema; 012 zero network permanently; 013 Apache-2.0 + GitHub Releases + Edge Add-ons; 014 Preact + signals, native CSS, _locales; 018 the eight mandatory patterns; 021 exporter-not-archiver; 022 write-once bundle with final manifest; 023 archive-stateless extension; plus RFC-0001 D1 (the `chatclipper` identifier), D2 (the `src/mycelium/` tree, SUPERSEDING the generated ADR-0002; re-point the generated consistency_lint `version_file` to src/mycelium/core/src/version.ts and the rendered AGENTS.md §5) and D4 (documents and precedence); `docs/adr/README.md` gains a plain-text Spec-mapping column — size: L"
       signals: [adr, decision-heavy]
-    - text: "1.11 CI workflow in the spec §13.4 gate order (lint → format → typecheck → unit → contract → build → e2e → size-limit → no-network-check → audit), Dependabot weekly, CodeQL"
+    - text: "1.11 CI workflow in the PRD §13.4 gate order (lint → format → typecheck → unit → contract → build → e2e → size-limit → no-network-check → audit) on the manifest's matrix, Dependabot weekly, CodeQL (RFC-0001) — size: M"
       signals: [security]
-    - "1.12 Root documents: operating instructions for the coding agent, PRIVACY.md and SECURITY.md stubs, docs/TODO-HUMAN.md, docs/ARCHITECTURE.md skeleton"
-  milestones:                                  # Q5.7 — spec §15 work packages mapped 1:1 (M1 = WP-00 above); milestone vocabulary: semver
+    - text: "1.12 Root documents (RFC-0001 D4): import the PRD verbatim to `docs/prd/SPEC-LCA-001.md`; README/CONTRIBUTING note on the 160-character path budget (clone root <= ~90 characters, or core.longpaths + LongPathsEnabled); PRIVACY.md and SECURITY.md stubs; docs/TODO-HUMAN.md; docs/ARCHITECTURE.md skeleton; retire `.draft-specs/` once both moves have landed — size: S"
+      signals: []
+    - text: "1.13 A `tools` unit test asserting that no tracked repo-relative path exceeds 160 characters (RFC-0001 D2) — size: XS"
+      signals: []
+    - text: "1.14 Tag v0.1.0 on completion of M1 — the first release of the owner's cadence (+0.1 minor per completed milestone; v1.0.0 at M12); annotated tag, drafted GitHub Release, changelog rolled (RFC-0001) — size: XS"
+      signals: []
+  milestones:                                  # PRD §15 work packages mapped 1:1 (M1 = WP-00 above); milestone vocabulary: semver; release cadence: v0.N.0 tagged on completion of MN (owner, 2026-09-11), v1.0.0 at M12
     - number: 2
       title: "Core and export contract (WP-01)"
-      goal: "The domain package and the export contract exist, are fully tested in Node, and any consumer can validate a bundle with the published schemas alone."
+      goal: "Implements RFC-0001 D0/D1 and the API-contract fold: the domain package and the export contract exist, are fully tested in Node, and any consumer can validate a bundle with the published schemas alone. Tag v0.2.0 on completion."
       items:
-        - text: "2.1 Zod schemas for CanonicalCapture, RawCapture, Manifest and Anchor 1.0.0 with branded ids and readonly domain types; `SCHEMA_VERSION` constants"
-          signals: [adr, sets-pattern]
-        - "2.2 `canon()` and `Hasher` (Web Crypto SHA-256): message and conversation `content_sha256`, `dom_text_sha256`, `primary_text` per block type; property tests for idempotence, determinism and field-order independence"
-        - "2.3 ULID `IdGenerator` and injected `Clock`; `sanitizeUrl` (media hosts and `source_url` reduced to origin + pathname, counting redactions); `sanitizePathSegment` / `buildBundlePath` with the Windows rules and the 120-character budget"
-        - "2.4 Deterministic JSON serialization (schema key order, indent 0, trailing newline, UTF-8 without BOM); `validateInvariants()`; `Result` / `DomainError` types"
-        - "2.5 `schema:gen` (Zod → JSON Schema draft 2020-12) and the `validate-bundle` CLI with zero extension dependencies; Appendix A example bundles as self-healing fixtures (Ajv accepts them, rejects negatives, flags an altered hash)"
-        - "2.6 `docs/CONTRACT.md` — the export-contract extract for the ingestion module; coverage gate core >= 95% at this milestone"
+        - text: "2.1 Zod schemas for CanonicalCapture, RawCapture, Manifest and Anchor 1.0.0 with branded ids and readonly domain types; `SCHEMA_VERSION` constants; `producer.name: 'chatclipper'` and the `export-root.json` producer schema (RFC-0001 D1) — size: L"
+          signals: [sets-pattern, "severity:high"]
+        - text: "2.2 `canon()` and `Hasher` (Web Crypto SHA-256): message and conversation `content_sha256`, `dom_text_sha256`, `primary_text` per block type; property tests for idempotence, determinism and field-order independence (RFC-0001) — size: M"
+          signals: ["severity:high"]
+        - text: "2.3 ULID `IdGenerator` and injected `Clock`; `sanitizeUrl` (media hosts and `source_url` reduced to origin + pathname, counting redactions); `sanitizePathSegment` / `buildBundlePath` with the Windows rules and the 120-character export-path budget (RFC-0001) — size: M"
+          signals: ["severity:medium"]
+        - text: "2.4 Deterministic JSON serialization (schema key order, indent 0, trailing newline, UTF-8 without BOM); `validateInvariants()`; `Result` / `DomainError` types (RFC-0001) — size: M"
+          signals: ["severity:high"]
+        - text: "2.5 `schema:gen` (Zod → JSON Schema draft 2020-12) and the `validate-bundle` CLI with zero extension dependencies; PRD Appendix A example bundles as self-healing fixtures with `producer.name: 'chatclipper'` (Ajv accepts them, rejects negatives, flags an altered hash) — flagged until PRD Rev 3.1 updates Appendix A (RFC-0001 D1) — size: M"
+          signals: ["severity:medium"]
+        - text: "2.6 `docs/CONTRACT.md` — the export-contract extract for the ingestion module; coverage gate core >= 95% at this milestone (RFC-0001) — size: S"
+          signals: []
+        - text: "2.7 The M2 ADRs, numbered at authoring (RFC-0001 D3): spec 008 ULID identity within a capture; 009 the three hashes; 011 RAW as redacted DOM fragments; 016 attachments as metadata only; 024 the file-based anchor protocol — size: S"
+          signals: [adr]
     - number: 3
       title: "Platform spikes: FSA, downloads and the Port channel (WP-02, checkpoint CP1)"
-      goal: "Time-boxed (one day) evidence on the MV3 capabilities the design depends on, recorded in docs/spikes/SPIKE-001.md, closing the provisional sink decision."
+      goal: "Implements RFC-0001 D0: time-boxed (one day) evidence on the MV3 capabilities the design depends on, recorded in docs/spikes/SPIKE-001.md, closing the provisional sink decision (spec ADR-005). Tag v0.3.0 on completion."
       items:
-        - text: "3.1 FSA picker from Options and Side Panel; handle persistence in IndexedDB across browser restarts (permission state and prompt); 'always allow' on the extension origin"
+        - text: "3.1 FSA picker from Options and Side Panel; handle persistence in IndexedDB across browser restarts (permission state and prompt); 'always allow' on the extension origin (RFC-0001) — size: M"
           signals: [decision-heavy]
-        - "3.2 Write-once semantics on NTFS and SMB shares: latency and behavior when the browser is killed mid-write"
-        - "3.3 `downloads.download` with subfolders, `onChanged` → complete, and the effect of 'Ask where to save'"
-        - "3.4 `tabs.connect` / `onDisconnect` behavior under navigation and tab reload"
-        - text: "3.5 Checkpoint CP1: final sink ADR (FSA vs downloads as default, Reconnect UX) and confirmation of the single Port channel; PO report (done / missing / decisions / open questions)"
+        - text: "3.2 Write-once semantics on NTFS and SMB shares: latency and behavior when the browser is killed mid-write (RFC-0001) — size: S"
+          signals: []
+        - text: "3.3 `downloads.download` with subfolders, `onChanged` → complete, and the effect of 'Ask where to save' (RFC-0001) — size: S"
+          signals: []
+        - text: "3.4 `tabs.connect` / `onDisconnect` behavior under navigation and tab reload (RFC-0001) — size: S"
+          signals: []
+        - text: "3.5 Checkpoint CP1: the sink ADR (spec ADR-005, FSA vs downloads as default, Reconnect UX) and confirmation of the single Port channel; PO report (done / missing / decisions / open questions) (RFC-0001 D3) — size: S"
           signals: [adr, decision-heavy]
     - number: 4
       title: "ChatGPT adapter and CaptureEngine: first real capture (WP-03)"
-      goal: "A real ChatGPT conversation of at least 100 messages is captured completely, normalized and validated in memory; the synthetic e2e shows zero gaps with every collapsed section expanded."
+      goal: "Implements RFC-0001 D0 and the algorithm-sketch fold: a real ChatGPT conversation of at least 100 messages is captured completely, normalized and validated in memory; the synthetic e2e shows zero gaps with every collapsed section expanded. Tag v0.4.0 on completion."
       items:
-        - text: "4.1 `ProviderAdapter` interface and `runCapture()`: per-window expansion, quiescence wait, overlap merge, downward sweep, cancel via AbortSignal, in-page shadow-DOM banner"
+        - text: "4.1 `ProviderAdapter` interface and `runCapture()`: per-window expansion, quiescence wait, overlap merge, downward sweep, cancel via AbortSignal, in-page shadow-DOM banner (RFC-0001) — size: L"
+          signals: [sets-pattern, "severity:high"]
+        - text: "4.2 `ChatGptAdapter`: `selectors.ts` (essential flags, stripSelectors, selectorsVersion), `probe`, `detect` with `provider_project_name`, `findCollapsed` / `expand`, `mediaHostPatterns` (RFC-0001) — size: M"
+          signals: ["severity:medium"]
+        - text: "4.3 Normalizer: ordered parser chain (code, tool_call, thinking, image, file, text via Turndown + GFM), coded warnings, citations, attachment metadata, title fallback (RFC-0001) — size: L"
           signals: [sets-pattern]
-        - "4.2 `ChatGptAdapter`: `selectors.ts` (essential flags, stripSelectors, selectorsVersion), `probe`, `detect` with `provider_project_name`, `findCollapsed` / `expand`, `mediaHostPatterns`"
-        - text: "4.3 Normalizer: ordered parser chain (code, tool_call, thinking, image, file, text via Turndown + GFM), coded warnings, citations, attachment metadata, title fallback"
-          signals: [sets-pattern]
-        - "4.4 Single Port channel with Zod validation on both sides, chunked streaming with cooperative yield; `ExportUseCase` up to in-memory bundle assembly"
-        - "4.5 Side Panel: detection card with adapter health, progress phases, final report, on-screen Markdown preview (never persisted)"
-        - "4.6 Record fixture (dev) with the anonymizer; three ChatGPT fixtures recorded by the PO; adapter contract tests with happy-dom"
-        - "4.7 Synthetic-provider e2e: 300 virtualized messages with 12 'Show more' sections inside unmounted messages → all expanded, 0 gaps; manual smoke on a real conversation >= 100 messages"
-    - number: 5
-      title: "Bundle writer: first real bundle in the inbox (WP-04, checkpoint CP2, release v0.1.0)"
-      goal: "A complete, read-back-verified, validate-bundle-green bundle lands in the real export folder via FSA; the ingestion module has something to ingest; v0.1.0 is tagged."
-      items:
-        - text: "5.1 `ExportSink` port with `FsaExportSink` (read-back verification), `DownloadsExportSink` (`onChanged` ordering, `write_verified: false`, `write_not_verified` warning) and `MemoryExportSink`"
-          signals: [sets-pattern]
-        - "5.2 Export-root initialization: `export-root.json`, `schema/`, `README.md`; refusal of a higher layout version (`ExportRootLayoutAhead`)"
-        - text: "5.3 `writeBundle()`: raw → capture → manifest with hash verification; `withRetry` with backoff; the local `exports` cache; `PendingWrite` parking of the serialized bundle"
+        - text: "4.4 Single Port channel (`name: 'chatclipper'`) with Zod validation on both sides, chunked streaming with cooperative yield; `ExportUseCase` up to in-memory bundle assembly (RFC-0001 D1) — size: M"
+          signals: ["severity:medium"]
+        - text: "4.5 Side Panel: detection card with adapter health, progress phases, final report, on-screen Markdown preview (never persisted) (RFC-0001) — size: M"
+          signals: ["severity:medium"]
+        - text: "4.6 Record fixture (dev) with the anonymizer; three ChatGPT fixtures recorded by the PO; adapter contract tests with happy-dom (RFC-0001) — size: S"
+          signals: []
+        - text: "4.7 Synthetic-provider e2e: 300 virtualized messages with 12 'Show more' sections inside unmounted messages → all expanded, 0 gaps; manual smoke on a real conversation >= 100 messages (RFC-0001) — size: M"
+          signals: ["severity:high"]
+        - text: "4.8 The M4 ADRs, numbered at authoring (RFC-0001 D3): spec 006 DOM-only, no private endpoints; 007 normalization in the content script behind `HtmlParser`; 015 active branch only; 017 fixtures + synthetic provider, no live provider in CI — size: S"
           signals: [adr]
-        - "5.4 User annotations (project, tags, note) remembered per conversation; Options page (folder, language)"
-        - "5.5 E2E with `MemoryExportSink`: complete bundle and `validate-bundle` green; cancel leaves no manifest; manual smoke: real bundle via FSA, validated"
-        - text: "5.6 Checkpoint CP2: has the ingestion module ingested the first real bundle? Contract corrections before v0.1.0; adapter priority; tag v0.1.0"
+    - number: 5
+      title: "Bundle writer: first real bundle in the inbox (WP-04, checkpoint CP2)"
+      goal: "Implements RFC-0001 D0 and the Data & schema fold: a complete, read-back-verified, validate-bundle-green bundle lands in the real export folder via FSA; the ingestion module has something to ingest. Tag v0.5.0 on completion."
+      items:
+        - text: "5.1 `ExportSink` port with `FsaExportSink` (read-back verification), `DownloadsExportSink` (`onChanged` ordering, `write_verified: false`, `write_not_verified` warning) and `MemoryExportSink` (RFC-0001) — size: L"
+          signals: [sets-pattern, "severity:high"]
+        - text: "5.2 Export-root initialization: `export-root.json` (with the `chatclipper` producer), `schema/`, `README.md`; refusal of a higher layout version (`ExportRootLayoutAhead`) (RFC-0001 D1) — size: S"
+          signals: ["severity:medium"]
+        - text: "5.3 `writeBundle()`: raw → capture → manifest with hash verification; `withRetry` with backoff; the local `exports` cache; `PendingWrite` parking of the serialized bundle (RFC-0001) — size: M"
+          signals: [adr, "severity:high"]
+        - text: "5.4 User annotations (project, tags, note) remembered per conversation; Options page (folder, language) (RFC-0001) — size: S"
+          signals: []
+        - text: "5.5 E2E with `MemoryExportSink`: complete bundle and `validate-bundle` green; cancel leaves no manifest; manual smoke: real bundle via FSA, validated (RFC-0001) — size: M"
+          signals: ["severity:high"]
+        - text: "5.6 Checkpoint CP2: has the ingestion module ingested the first real bundle? Contract corrections before the tag; adapter priority; tag v0.5.0 (RFC-0001) — size: S"
           signals: [decision-heavy]
     - number: 6
       title: "Hardening (WP-05)"
-      goal: "Performance budgets become blocking gates and every failure path has a tested recovery."
+      goal: "Implements the RFC-0001 scalability-budgets fold: performance budgets become blocking gates and every failure path has a tested recovery. Tag v0.6.0 on completion."
       items:
-        - "6.1 Synthetic 1,000-message performance fixture; NFR-001/002/003 measured and enforced; `size-limit` on the content script (NFR-017); results under docs/benchmarks/"
-        - "6.2 `PendingWrite` and Retry write producing byte-identical files; `ContentScriptDisconnected` with an `incomplete` bundle on user confirmation"
-        - "6.3 Full error taxonomy surfaced in the UI with remedies (NFR-014); `downloads.onChanged` interrupted handling"
-        - "6.4 E2E: retry write, disconnection, downloads-sink ordering"
+        - text: "6.1 Synthetic 1,000-message performance fixture in `src/mycelium/core/bench/`; NFR-001/002/003 measured and enforced; `size-limit` on the content script (NFR-017); results under docs/benchmarks/ (RFC-0001) — size: M"
+          signals: ["severity:high"]
+        - text: "6.2 `PendingWrite` and Retry write producing byte-identical files; `ContentScriptDisconnected` with an `incomplete` bundle on user confirmation (RFC-0001) — size: M"
+          signals: ["severity:high"]
+        - text: "6.3 Full error taxonomy surfaced in the UI with remedies (NFR-014); `downloads.onChanged` interrupted handling (RFC-0001) — size: S"
+          signals: ["severity:medium"]
+        - text: "6.4 E2E: retry write, disconnection, downloads-sink ordering (RFC-0001) — size: S"
+          signals: ["severity:medium"]
     - number: 7
       title: "Claude adapter (WP-06)"
-      goal: "Claude conversations are captured to the same bar as ChatGPT."
+      goal: "Implements RFC-0001 D0 for the second provider: Claude conversations are captured to the same bar as ChatGPT. Tag v0.7.0 on completion."
       items:
-        - "7.1 `ClaudeAdapter`: `selectors.ts`, platform-specific expansion (reasoning and artifacts), `mediaHostPatterns`, project name from the header"
-        - "7.2 Three anonymized fixtures, adapter contract tests, Appendix C update"
-        - "7.3 Manual smoke on a real Claude conversation"
+        - text: "7.1 `ClaudeAdapter`: `selectors.ts`, platform-specific expansion (reasoning and artifacts), `mediaHostPatterns`, project name from the header (RFC-0001) — size: M"
+          signals: ["severity:medium"]
+        - text: "7.2 Three anonymized fixtures, adapter contract tests, PRD Appendix C update (RFC-0001) — size: S"
+          signals: []
+        - text: "7.3 Manual smoke on a real Claude conversation (RFC-0001) — size: XS"
+          signals: []
     - number: 8
       title: "Gemini adapter (WP-07)"
-      goal: "Gemini conversations are captured to the same bar as ChatGPT."
+      goal: "Implements RFC-0001 D0 for the third provider: Gemini conversations are captured to the same bar as ChatGPT. Tag v0.8.0 on completion."
       items:
-        - "8.1 `GeminiAdapter`: Angular elements (`user-query`, `model-response`, `message-content`), longer quiescence, 'Show reasoning' expansion, `mediaHostPatterns`"
-        - "8.2 Three anonymized fixtures, adapter contract tests, Appendix C update"
-        - "8.3 Manual smoke on a real Gemini conversation"
+        - text: "8.1 `GeminiAdapter`: Angular elements (`user-query`, `model-response`, `message-content`), longer quiescence, 'Show reasoning' expansion, `mediaHostPatterns` (RFC-0001) — size: M"
+          signals: ["severity:medium"]
+        - text: "8.2 Three anonymized fixtures, adapter contract tests, PRD Appendix C update (RFC-0001) — size: S"
+          signals: []
+        - text: "8.3 Manual smoke on a real Gemini conversation (RFC-0001) — size: XS"
+          signals: []
     - number: 9
-      title: "Release v1.0.0 (WP-08)"
-      goal: "A production-quality release for the three providers with the privacy, security and diagnostic surfaces complete."
+      title: "Production hardening: privacy, security, accessibility, release pipeline (WP-08)"
+      goal: "Implements the RFC-0001 cross-cutting fold: the three providers ship with the privacy, security, accessibility and diagnostic surfaces complete and the release pipeline proven. Tag v0.9.0 on completion."
       items:
-        - "9.1 UI i18n (`_locales/{en,it}`), accessibility (keyboard, ARIA, AA contrast) with the axe-core scan in the Playwright e2e as a blocking gate, diagnostic bundle export without content or titles (FR-016)"
-        - text: "9.2 `no-network-check` on the production bundle including the content script; CSP and permissions review against spec §11.2"
+        - text: "9.1 UI i18n (`_locales/{en,it}`), accessibility (keyboard, ARIA, AA contrast) with the axe-core scan in the Playwright e2e as a blocking gate, diagnostic bundle export without content or titles (FR-016) (RFC-0001) — size: M"
+          signals: ["severity:medium"]
+        - text: "9.2 `no-network-check` on the production bundle including the content script; CSP and permissions review against PRD §11.2 (RFC-0001) — size: S"
           signals: [security]
-        - text: "9.3 PRIVACY.md, SECURITY.md, enterprise-account and ToS notice in README and Options; runbook 'the provider changed its DOM'; docs/ARCHITECTURE.md complete"
+        - text: "9.3 PRIVACY.md, SECURITY.md, enterprise-account and ToS notice in README and Options; runbook 'the provider changed its DOM'; docs/ARCHITECTURE.md complete (RFC-0001) — size: M"
           signals: [security]
-        - "9.4 Release pipeline: tag → zip, `SHA256SUMS`, CycloneDX SBOM, `schema/` and `validate-bundle` attached; release smoke on all three providers; tag v1.0.0"
+        - text: "9.4 Release pipeline: tag → `chatclipper-chromium-vX.Y.Z.zip`, `SHA256SUMS`, CycloneDX SBOM, `schema/` and `validate-bundle` attached; release smoke on all three providers; tag v0.9.0 (RFC-0001 D1) — size: M"
+          signals: ["severity:medium"]
     - number: 10
-      title: "Tail export with anchor (WP-09, Phase 3, v1.x)"
-      goal: "When the ingestion module writes anchors, an export scans only the tail; an invalid anchor degrades to a full scan."
+      title: "Tail export with anchor (WP-09, Phase 3)"
+      goal: "Implements RFC-0001 D0 (Phase 2 contract): when the ingestion module writes anchors, an export scans only the tail; an invalid anchor degrades to a full scan. Gated on the PO's answers to Q2/Q3. Tag v0.10.0 on completion."
       items:
-        - text: "10.1 Anchor reader (FSA only): Zod, 256 kB cap, 90-day freshness, hostile-input handling with `anchor_invalid` fallback to a full scan"
+        - text: "10.1 Anchor reader (FSA only): Zod, 256 kB cap, 90-day freshness, hostile-input handling with `anchor_invalid` fallback to a full scan (RFC-0001) — size: M"
           signals: [security]
-        - "10.2 `anchorFound()` in the CaptureEngine (>= 3 ordered matches by `provider_message_id` or `dom_text_sha256`); `TailExportUseCase`; `scan_scope: tail` and `capture.anchor`"
-        - "10.3 Side Panel 'in archive' state, Export tail action, 'new since last export' indicator"
-        - "10.4 E2E with synthetic anchors: a regenerated last message still anchors; an invalid anchor yields a full scan"
+        - text: "10.2 `anchorFound()` in the CaptureEngine (>= 3 ordered matches by `provider_message_id` or `dom_text_sha256`); `TailExportUseCase`; `scan_scope: tail` and `capture.anchor` (RFC-0001) — size: M"
+          signals: ["severity:high"]
+        - text: "10.3 Side Panel 'in archive' state, Export tail action, 'new since last export' indicator (RFC-0001) — size: S"
+          signals: ["severity:medium"]
+        - text: "10.4 E2E with synthetic anchors: a regenerated last message still anchors; an invalid anchor yields a full scan (RFC-0001) — size: S"
+          signals: ["severity:medium"]
     - number: 11
       title: "Re-normalization CLI, Native Messaging sink, Firefox (WP-10, Phase 3 — each behind an ADR)"
-      goal: "Optional extensions for consumers whose stack cannot run the core package, for a filesystem sink without FSA, and for Firefox."
+      goal: "Implements RFC-0001 D0 (Phase 3 options): consumers whose stack cannot run the core package, a filesystem sink without FSA, and Firefox — each decided by its own ADR. Gated on the PO's answer to Q2. Tag v0.11.0 on completion."
       items:
-        - text: "11.1 `renormalize <bundle>` CLI on the core package with linkedom, so the ingestion module can regenerate the canonical from raw.json after a normalizer fix"
+        - text: "11.1 `chatclipper renormalize <bundle>` CLI on the core package with linkedom, so the ingestion module can regenerate the canonical from raw.json after a normalizer fix (RFC-0001 D1) — size: M"
           signals: [adr]
-        - text: "11.2 `NativeMessagingExportSink`"
+        - text: "11.2 `NativeMessagingExportSink` (RFC-0001) — size: L"
           signals: [adr, security]
-        - text: "11.3 Firefox build"
+        - text: "11.3 Firefox build (RFC-0001) — size: M"
           signals: [adr]
+    - number: 12
+      title: "Release v1.0.0 — all milestones complete, all open issues fixed"
+      goal: "The owner's release rule (2026-09-11): v1.0.0 is tagged only after every milestone M1-M11 is complete and every open issue is fixed. Implements the RFC-0001 cross-cutting fold's release step at the end of the cadence."
+      items:
+        - text: "12.1 Fix or explicitly dispose every open issue and every open bug-ledger record (fixed / wontfix / rejected with rationale); no `TODO` without a reference (RFC-0001) — size: L"
+          signals: ["severity:high"]
+        - text: "12.2 Final release smoke on ChatGPT, Claude and Gemini with the release build, real FSA folder, `validate-bundle` green on every bundle (RFC-0001) — size: S"
+          signals: []
+        - text: "12.3 Tag v1.0.0: annotated tag, drafted GitHub Release with `chatclipper-chromium-v1.0.0.zip`, `SHA256SUMS`, SBOM, `schema/` and `validate-bundle`; changelog rolled; the human publishes (RFC-0001 D1) — size: S"
+          signals: ["severity:medium"]
+        - text: "12.4 Edge Add-ons submission of the v1.0.0 build (PRD ADR-013: when mature) (RFC-0001) — size: S"
+          signals: []
 
 # Interview provenance (#169) — one entry per answer-bearing section present, written as settled.
 interview:
