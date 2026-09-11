@@ -9,18 +9,19 @@
 # the refreshed CI matrix, and Simplified Chinese for the docs translations.
 # Template + field dictionary: .eados-core/orchestrator/project.yaml.template
 #
-# Decisions the design phase (RFC) must settle, recorded here so they are not lost:
-#   - npm package names under the confirmed `@mycelium-labs` scope (the spec calls the four
-#     workspace packages `@lce/core|adapters|extension|tools`; proposed: `chatclipper-<pkg>`);
-#   - the repository layout: the EADOS cross-language tree `src/main/typescript/it/mycelium-labs/
-#     chatclipper/<package>` (seeded via spec.layers) vs the spec §14.1 root-level `packages/`;
-#   - ADR numbering: the spec's ADR-001..024 are re-numbered at authoring time after the two
-#     day-zero ADRs EADOS seeds (lesson L-0005: never reserve ADR numbers ahead of authoring);
-#   - where the Italian original lives (proposed: imported verbatim as the PRD, the English frozen
-#     spec is generated from this manifest) — an English-on-disk exception to record in AGENTS.md §2.
+# The four repository-shape decisions the import left open were SETTLED by RFC-0001
+# (docs/rfc/0001-system-design-and-repository-shape.md, approved by the owner on 2026-09-11):
+#   - D1 naming: `chatclipper` replaces `lce` on every machine-visible surface, including the
+#     contract literal producer.name; packages `@mycelium-labs/chatclipper-<pkg>`; spec id SPEC-LCA-001;
+#   - D2 layout: the OWNER chose the literal `src/mycelium/{core,adapters,extension,tools}` tree with a
+#     160-character tracked-path budget, superseding the generated ADR-0002 at WP-00 (the tech-lead's
+#     dissent for the derived tree is recorded in the RFC); hence layered: false / layers: [] below;
+#   - D3 ADR numbering: sequential at authoring time from ADR-0003; the spec's table is mapped, not copied;
+#   - D4 documents: the Italian PRD imported verbatim to docs/prd/SPEC-LCA-001.md; the draft golden rules
+#     become governance.house_rules (written by the architect during plan, before scaffold).
 
 schema_version: 1
-manifest_rev: 1
+manifest_rev: 3
 domain: software             # Q0.4 — confirmed; loads .eados-core/orchestrator/domains/software.yaml
 
 # Agent runtime: Claude Code, detected from the CLAUDECODE / CLAUDE_CODE_ENTRYPOINT environment
@@ -29,10 +30,11 @@ domain: software             # Q0.4 — confirmed; loads .eados-core/orchestrato
 # KNOWN_SECTIONS rejects it at --check (factory gap, to be reported upstream) — detection suffices.
 
 delivery_state:
-  phase: design              # init|design|plan|scaffold|audit|migrate
+  phase: plan                # init|design|plan|scaffold|audit|migrate
   checkpoints:               # transition ledger — a human-gated move records confirmed_by + gate_results
     - { from: init, to: design, gates: ['manifest-valid'], at: 2026-09-11, confirmed_by: danielPoloWork, gate_results: { manifest-valid: OK } }
-  refs: { rfcs: [], milestones: [], prs: [], releases: [] }
+    - { from: design, to: plan, gates: ['rfc-approved'], at: 2026-09-11, confirmed_by: danielPoloWork, gate_results: { rfc-approved: OK } }
+  refs: { rfcs: [RFC-0001], milestones: [], prs: [], releases: [] }   # RFC-0001 recorded 2026-09-11 (state writer: enterprise-architect)
 
 identity:
   project_name:    "mycelium-chat-clipper"     # Q0.3 — the GitHub repository name (git remote danielPoloWork/mycelium-chat-clipper)
@@ -128,7 +130,7 @@ governance:
     packaging:  false                          # Q4.6 — ASSUMED default: no package registry; GitHub Releases zip + SBOM (roadmap 9.4), Edge Add-ons later
     service:    false
     announce:   false                          # Q4.8 — ASSUMED default
-    layered:    true                           # Q5.4a — seed the four workspace packages as the layered skeleton
+    layered:    false                          # Q5.4a — was true; RFC-0001 D2: the owner chose src/mycelium/, so the derived tree is not seeded with layers
     api_spec:   false                          # Q5.5 — ASSUMED: the IDL is JSON Schema GENERATED from Zod (roadmap 2.5), not a hand-written stub
 
 i18n:
@@ -341,7 +343,7 @@ spec:
     - name: "Manual Dependency Injection"
       why: "One composition root per MV3 context gives testability without singletons or a container"
   pattern_discipline: enforced                 # Q5.4 — spec CON-004 / ADR-018: exactly these eight; Visitor, Command/Event Bus, Mediator, extra Facades, Decorator hierarchies, Builders for schema objects, Specification, Memento classes, Template Method inheritance, single-implementation Strategy are forbidden without an ADR
-  layers: [core, adapters, extension, tools]   # Q5.4a — the four workspace packages seeded as the skeleton (hexagonal layers live inside extension/ and core/)
+  layers: []                                   # Q5.4a — RFC-0001 D2: packages live at src/mycelium/{core,adapters,extension,tools}, not in the derived tree
   public_api:                                  # Q5.5 — the contract IS the product (spec §6); the Port protocol (§5.6); the core library and CLI
     - "Export bundle layout v1 (`export_layout_version: 1`): `inbox/<platform>/<conversation_key>/<capture_id>/{raw.json, capture.json, manifest.json}` plus `export-root.json`, `schema/*.v1.json` and `README.md` at the export root; `state/<platform>/<conversation_key>.anchor.json` is written by the consumer (Phase 2). `conversation_key` = sanitized provider id (ASCII [a-z0-9-_], <= 64) or `nokey`; `capture_id` = ULID. The extension never modifies, deletes, or reads anything under `inbox/`."
     - "`capture.json` — CanonicalCapture 1.0.0: `capture` (capture_id, captured_at, scan_scope, anchor, previous_capture_id, capture_status, warnings), `conversation` (provider, platform, provider_conversation_id, provider_project_name, title, source_url, created_at/updated_at, language, models, message_count, content_sha256, branch_info), `user_annotations` (project, tags, note), `messages[]` (ULID id, contiguous ordinal, provider_message_id, role, author_name, model, created_at, content blocks, citations, attachment_ids, content_sha256, match_hints.dom_text_sha256, metadata), `attachments[]`, `provenance` (extension/core versions, adapter + selectors_version, capture_method 'dom', browser, raw_file hash). Missing value = null; timestamps only from unambiguous values."
