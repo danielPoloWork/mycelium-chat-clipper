@@ -33,7 +33,7 @@
 # "after all milestone and issue fixes then we release v1.0.0" (likely; cheap to cut on the PR).
 
 schema_version: 1
-manifest_rev: 7
+manifest_rev: 8
 domain: software             # Q0.4 — confirmed; loads .eados-core/orchestrator/domains/software.yaml
 
 # Which EADOS produced this repository (#319) — RECORDED at scaffold (2026-09-11) so the stamp stays
@@ -58,7 +58,7 @@ delivery_state:
     - { from: design, to: plan, gates: ['rfc-approved'], at: 2026-09-11, confirmed_by: danielPoloWork, gate_results: { rfc-approved: OK } }
     - { from: plan, to: scaffold, gates: ['roadmap-covers-rfcs'], at: 2026-09-11, confirmed_by: danielPoloWork, gate_results: { roadmap-covers-rfcs: OK } }
     - { from: scaffold, to: audit, gates: ['consistency-lint', 'self-review'], at: 2026-09-11, gate_results: { consistency-lint: manual, self-review: manual } }   # not human-gated (workflow.yaml); `manual` = external gates the runner cannot evaluate — both ran green in generate.md Step 7 on 2026-09-11 (tools/consistency_lint.py OK; self_review.py OK)
-  refs: { rfcs: [RFC-0001], milestones: [M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12], prs: [], releases: [] }   # RFC-0001 (design) and the roadmap milestone ids (plan) recorded 2026-09-11 (state writer: enterprise-architect)
+  refs: { rfcs: [RFC-0001], milestones: [M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11, M12], prs: [1, 2, 3, 4], releases: [] }   # RFC-0001 (design), milestone ids (plan), merged PRs #1-#4 (audit, 2026-09-11) recorded by the state writer (enterprise-architect). Bootstrap audit 2026-09-11: risk critical -> security gate REQUIRED -> threat model + register at docs/security/ (RR-01..RR-07); no migration proposed
 
 identity:
   project_name:    "mycelium-chat-clipper"     # Q0.3 — the GitHub repository name (git remote danielPoloWork/mycelium-chat-clipper)
