@@ -1,0 +1,18 @@
+# Auto-derived by tools/derive_links.py from merged PRs — do not hand-edit.
+links:
+  - pr: 4
+    rfc: "RFC-0001"
+    milestone: "M1 — Project bootstrap & CI"
+    commit: "95a59397dbed96ed1f8e403284b37db3adcfbd98"
+  - pr: 3
+    rfc: "RFC-0001"
+    milestone: "M1 — Project bootstrap & CI"
+    commit: "3479065c982d9b938753e1ec9a51abc57604587c"
+  - pr: 2
+    rfc: "RFC-0001"
+    milestone: "M1 — Project bootstrap & CI"
+    commit: "74a5ef3078019980ac1dd9f70d0e5241bf2f81ea"
+  - pr: 1
+    rfc: "RFC-0001"
+    milestone: "M1 — Project bootstrap & CI"
+    commit: "5320e7e564c91bf7011628dedbfc672c0c15cd60"
